@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BIFlow — Data Analytics & Business Intelligence Dashboard</title>
+  <meta name="description" content="BIFlow is a powerful data analytics and business intelligence platform to visualize KPIs, import data, build custom dashboards, and export reports." />
+  <meta name="theme-color" content="#0d0f1a" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <!-- D3.js -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <!-- PapaParse (CSV) -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <!-- XLSX (Excel) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- jsPDF -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <!-- html2canvas -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-screen">
+      <div class="login-bg">
+        <div class="login-orb orb-1"></div>
+        <div class="login-orb orb-2"></div>
+        <div class="login-orb orb-3"></div>
+      </div>
+      <div class="login-card glass-card">
+        <div class="login-logo">
+          <div class="logo-icon">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <rect width="32" height="32" rx="10" fill="url(#logoGrad)"/>
+              <rect x="6" y="18" width="4" height="8" rx="2" fill="white"/>
+              <rect x="12" y="12" width="4" height="14" rx="2" fill="white" opacity="0.85"/>
+              <rect x="18" y="8" width="4" height="18" rx="2" fill="white" opacity="0.7"/>
+              <rect x="24" y="14" width="4" height="12" rx="2" fill="white" opacity="0.55"/>
+              <defs>
+                <linearGradient id="logoGrad" x1="0" y1="0" x2="32" y2="32">
+                  <stop stop-color="#6366f1"/>
+                  <stop offset="1" stop-color="#8b5cf6"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div>
+            <h1 class="login-brand">BIFlow</h1>
+            <p class="login-tagline">Business Intelligence Platform</p>
+          </div>
+        </div>
+
+        <div id="login-tabs" class="auth-tabs">
+          <button class="auth-tab active" data-tab="login" id="tab-login">Sign In</button>
+          <button class="auth-tab" data-tab="register" id="tab-register">Register</button>
+        </div>
+
+        <form id="login-form" class="auth-form" autocomplete="off">
+          <div class="form-group">
+            <label for="login-email">Email</label>
+            <div class="input-wrap">
+              <i data-lucide="mail" class="input-icon"></i>
+              <input type="email" id="login-email" placeholder="admin@biflow.io" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <div class="input-wrap">
+              <i data-lucide="lock" class="input-icon"></i>
+              <input type="password" id="login-password" placeholder="••••••••" required />
+            </div>
+          </div>
+          <div id="login-error" class="auth-error hidden"></div>
+          <button type="submit" class="btn btn-primary btn-full" id="btn-login">
+            <i data-lucide="log-in"></i> Sign In
+          </button>
+          <p class="auth-hint">Demo: admin@biflow.io / admin123</p>
+        </form>
+
+        <form id="register-form" class="auth-form hidden" autocomplete="off">
+          <div class="form-group">
+            <label for="reg-name">Full Name</label>
+            <div class="input-wrap">
+              <i data-lucide="user" class="input-icon"></i>
+              <input type="text" id="reg-name" placeholder="John Doe" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="reg-email">Email</label>
+            <div class="input-wrap">
+              <i data-lucide="mail" class="input-icon"></i>
+              <input type="email" id="reg-email" placeholder="you@company.com" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="reg-password">Password</label>
+            <div class="input-wrap">
+              <i data-lucide="lock" class="input-icon"></i>
+              <input type="password" id="reg-password" placeholder="Min. 6 characters" required minlength="6" />
+            </div>
+          </div>
+          <div id="register-error" class="auth-error hidden"></div>
+          <button type="submit" class="btn btn-primary btn-full" id="btn-register">
+            <i data-lucide="user-plus"></i> Create Account
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="main-app" class="main-app hidden">
+      <!-- Sidebar -->
+      <aside id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">
+            <div class="logo-icon sm">
+              <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+                <rect width="32" height="32" rx="10" fill="url(#logoGrad2)"/>
+                <rect x="6" y="18" width="4" height="8" rx="2" fill="white"/>
+                <rect x="12" y="12" width="4" height="14" rx="2" fill="white" opacity="0.85"/>
+                <rect x="18" y="8" width="4" height="18" rx="2" fill="white" opacity="0.7"/>
+                <rect x="24" y="14" width="4" height="12" rx="2" fill="white" opacity="0.55"/>
+                <defs>
+                  <linearGradient id="logoGrad2" x1="0" y1="0" x2="32" y2="32">
+                    <stop stop-color="#6366f1"/>
+                    <stop offset="1" stop-color="#8b5cf6"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <span class="sidebar-brand">BIFlow</span>
+          </div>
+          <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle sidebar">
+            <i data-lucide="panel-left-close"></i>
+          </button>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a href="#" class="nav-item active" data-page="dashboard" id="nav-dashboard">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Dashboard</span>
+          </a>
+          <a href="#" class="nav-item" data-page="kpi" id="nav-kpi">
+            <i data-lucide="activity"></i>
+            <span>KPI Monitor</span>
+          </a>
+          <a href="#" class="nav-item" data-page="import" id="nav-import">
+            <i data-lucide="database"></i>
+            <span>Data Import</span>
+          </a>
+          <a href="#" class="nav-item" data-page="reports" id="nav-reports">
+            <i data-lucide="file-bar-chart"></i>
+            <span>Reports</span>
+          </a>
+
+          <div class="nav-section-label">SETTINGS</div>
+          <a href="#" class="nav-item" data-page="settings" id="nav-settings">
+            <i data-lucide="settings"></i>
+            <span>Settings</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="user-card">
+            <div class="user-avatar" id="user-avatar">A</div>
+            <div class="user-info">
+              <span id="user-name-display" class="user-name">Admin</span>
+              <span id="user-email-display" class="user-email">admin@biflow.io</span>
+            </div>
+            <button id="btn-logout" class="btn-icon" title="Logout">
+              <i data-lucide="log-out"></i>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content" id="main-content">
+        <!-- Top Bar -->
+        <header class="topbar">
+          <div class="topbar-left">
+            <button id="mobile-menu-btn" class="btn-icon mobile-only">
+              <i data-lucide="menu"></i>
+            </button>
+            <div class="page-breadcrumb">
+              <span id="page-title" class="page-title">Dashboard</span>
+            </div>
+          </div>
+          <div class="topbar-right">
+            <div class="topbar-search">
+              <i data-lucide="search"></i>
+              <input type="text" placeholder="Search datasets, KPIs..." id="global-search" />
+            </div>
+            <div class="topbar-actions">
+              <button class="btn-icon" id="btn-notifications" title="Notifications">
+                <i data-lucide="bell"></i>
+                <span class="badge" id="notif-badge">3</span>
+              </button>
+              <button class="btn btn-primary sm" id="btn-add-widget" style="display:none;">
+                <i data-lucide="plus"></i> Add Widget
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- Pages -->
+        <div class="pages-container">
+
+          <!-- Dashboard Page -->
+          <div id="page-dashboard" class="page active">
+            <div class="dashboard-controls">
+              <div class="dashboard-tabs" id="dashboard-tabs">
+                <!-- tabs injected here -->
+              </div>
+              <div class="dashboard-actions">
+                <button class="btn btn-ghost sm" id="btn-add-tab">
+                  <i data-lucide="plus"></i> New Tab
+                </button>
+                <button class="btn btn-ghost sm" id="btn-save-layout">
+                  <i data-lucide="save"></i> Save
+                </button>
+                <button class="btn btn-primary sm" id="btn-add-widget-dash">
+                  <i data-lucide="layout-grid"></i> Add Widget
+                </button>
+              </div>
+            </div>
+            <div id="widget-grid" class="widget-grid">
+              <!-- widgets injected -->
+            </div>
+            <div class="empty-state hidden" id="empty-dashboard">
+              <div class="empty-icon"><i data-lucide="layout-dashboard"></i></div>
+              <h3>No widgets yet</h3>
+              <p>Click "Add Widget" to build your dashboard</p>
+              <button class="btn btn-primary" id="btn-first-widget">
+                <i data-lucide="plus"></i> Add Your First Widget
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Monitor Page -->
+          <div id="page-kpi" class="page hidden">
+            <div class="section-header">
+              <div>
+                <h2>KPI Monitor</h2>
+                <p class="section-subtitle">Track your key performance indicators in real-time</p>
+              </div>
+              <button class="btn btn-primary" id="btn-add-kpi">
+                <i data-lucide="plus"></i> Add KPI
+              </button>
+            </div>
+
+            <div class="kpi-period-selector">
+              <button class="period-btn active" data-period="7d">7 Days</button>
+              <button class="period-btn" data-period="30d">30 Days</button>
+              <button class="period-btn" data-period="90d">90 Days</button>
+              <button class="period-btn" data-period="1y">1 Year</button>
+            </div>
+
+            <div id="kpi-grid" class="kpi-grid">
+              <!-- KPI cards injected -->
+            </div>
+
+            <div class="section-header" style="margin-top:2rem;">
+              <h3>Performance Trends</h3>
+            </div>
+            <div class="kpi-chart-row" id="kpi-trend-charts">
+              <!-- trend charts injected -->
+            </div>
+          </div>
+
+          <!-- Data Import Page -->
+          <div id="page-import" class="page hidden">
+            <div class="section-header">
+              <div>
+                <h2>Data Import</h2>
+                <p class="section-subtitle">Connect and import data from multiple sources</p>
+              </div>
+            </div>
+
+            <div class="import-sources">
+              <button class="source-card active" data-source="csv" id="src-csv">
+                <i data-lucide="file-text"></i>
+                <span>CSV / Excel</span>
+              </button>
+              <button class="source-card" data-source="api" id="src-api">
+                <i data-lucide="globe"></i>
+                <span>REST API</span>
+              </button>
+              <button class="source-card" data-source="json" id="src-json">
+                <i data-lucide="braces"></i>
+                <span>JSON Entry</span>
+              </button>
+              <button class="source-card" data-source="sample" id="src-sample">
+                <i data-lucide="database"></i>
+                <span>Sample Data</span>
+              </button>
+            </div>
+
+            <!-- CSV Upload Panel -->
+            <div id="panel-csv" class="import-panel">
+              <div class="drop-zone" id="drop-zone">
+                <div class="drop-icon"><i data-lucide="upload-cloud"></i></div>
+                <h3>Drop your file here</h3>
+                <p>Supports CSV, XLS, XLSX files up to 50MB</p>
+                <button class="btn btn-primary" id="btn-browse-file">
+                  <i data-lucide="folder-open"></i> Browse Files
+                </button>
+                <input type="file" id="file-input" accept=".csv,.xls,.xlsx" style="display:none" />
+              </div>
+            </div>
+
+            <!-- API Panel -->
+            <div id="panel-api" class="import-panel hidden">
+              <div class="glass-card p-lg">
+                <h3 class="card-title"><i data-lucide="globe"></i> REST API Connector</h3>
+                <div class="form-grid">
+                  <div class="form-group span-2">
+                    <label for="api-url">Endpoint URL</label>
+                    <div class="input-wrap">
+                      <i data-lucide="link" class="input-icon"></i>
+                      <input type="url" id="api-url" placeholder="https://api.example.com/data" />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="api-method">Method</label>
+                    <select id="api-method">
+                      <option>GET</option>
+                      <option>POST</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="api-dataset-name">Dataset Name</label>
+                    <input type="text" id="api-dataset-name" placeholder="My API Dataset" />
+                  </div>
+                  <div class="form-group span-2">
+                    <label for="api-headers">Headers (JSON)</label>
+                    <textarea id="api-headers" rows="3" placeholder='{"Authorization": "Bearer token", "Content-Type": "application/json"}'></textarea>
+                  </div>
+                  <div class="form-group span-2">
+                    <label for="api-path">Data Path (dot notation, e.g. data.results)</label>
+                    <input type="text" id="api-path" placeholder="data.results" />
+                  </div>
+                </div>
+                <button class="btn btn-primary" id="btn-fetch-api">
+                  <i data-lucide="zap"></i> Fetch Data
+                </button>
+              </div>
+            </div>
+
+            <!-- JSON Entry Panel -->
+            <div id="panel-json" class="import-panel hidden">
+              <div class="glass-card p-lg">
+                <h3 class="card-title"><i data-lucide="braces"></i> Manual JSON Entry</h3>
+                <div class="form-group">
+                  <label for="json-dataset-name">Dataset Name</label>
+                  <input type="text" id="json-dataset-name" placeholder="My Dataset" />
+                </div>
+                <div class="form-group">
+                  <label>JSON Data (array of objects)</label>
+                  <textarea id="json-data" rows="10" placeholder='[
+  {"month": "Jan", "revenue": 45000, "orders": 320},
+  {"month": "Feb", "revenue": 52000, "orders": 380}
+]'></textarea>
+                </div>
+                <button class="btn btn-primary" id="btn-import-json">
+                  <i data-lucide="import"></i> Import Data
+                </button>
+              </div>
+            </div>
+
+            <!-- Sample Data Panel -->
+            <div id="panel-sample" class="import-panel hidden">
+              <div class="sample-datasets">
+                <div class="glass-card sample-card" data-sample="sales">
+                  <div class="sample-icon"><i data-lucide="trending-up"></i></div>
+                  <h4>Sales Data</h4>
+                  <p>12 months of revenue, orders, and growth data</p>
+                  <span class="sample-badge">120 rows</span>
+                  <button class="btn btn-primary sm" data-sample="sales">Load Dataset</button>
+                </div>
+                <div class="glass-card sample-card" data-sample="traffic">
+                  <div class="sample-icon"><i data-lucide="users"></i></div>
+                  <h4>Web Traffic</h4>
+                  <p>Daily sessions, pageviews, bounce rate and conversions</p>
+                  <span class="sample-badge">90 rows</span>
+                  <button class="btn btn-primary sm" data-sample="traffic">Load Dataset</button>
+                </div>
+                <div class="glass-card sample-card" data-sample="finance">
+                  <div class="sample-icon"><i data-lucide="dollar-sign"></i></div>
+                  <h4>Financial KPIs</h4>
+                  <p>Revenue, expenses, profit margins, and cash flow</p>
+                  <span class="sample-badge">48 rows</span>
+                  <button class="btn btn-primary sm" data-sample="finance">Load Dataset</button>
+                </div>
+                <div class="glass-card sample-card" data-sample="product">
+                  <div class="sample-icon"><i data-lucide="package"></i></div>
+                  <h4>Product Metrics</h4>
+                  <p>Sales by product category, inventory, and returns</p>
+                  <span class="sample-badge">60 rows</span>
+                  <button class="btn btn-primary sm" data-sample="product">Load Dataset</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Preview Table -->
+            <div id="import-preview" class="import-preview hidden">
+              <div class="preview-header">
+                <div>
+                  <h3 id="preview-title">Preview</h3>
+                  <span id="preview-meta" class="preview-meta"></span>
+                </div>
+                <div class="preview-actions">
+                  <input type="text" id="import-dataset-name" placeholder="Dataset name..." class="inline-input" />
+                  <button class="btn btn-primary" id="btn-confirm-import">
+                    <i data-lucide="check"></i> Import
+                  </button>
+                  <button class="btn btn-ghost" id="btn-cancel-import">Cancel</button>
+                </div>
+              </div>
+              <div class="table-wrap" id="preview-table-wrap">
+                <!-- table injected -->
+              </div>
+            </div>
+
+            <!-- Existing Datasets -->
+            <div class="section-header" style="margin-top:3rem;">
+              <h3>Your Datasets</h3>
+              <span id="dataset-count" class="badge-count">0 datasets</span>
+            </div>
+            <div id="datasets-list" class="datasets-list">
+              <!-- dataset cards injected -->
+            </div>
+          </div>
+
+          <!-- Reports Page -->
+          <div id="page-reports" class="page hidden">
+            <div class="section-header">
+              <div>
+                <h2>Reports</h2>
+                <p class="section-subtitle">Build, export, and schedule business reports</p>
+              </div>
+              <button class="btn btn-primary" id="btn-new-report">
+                <i data-lucide="plus"></i> New Report
+              </button>
+            </div>
+
+            <div class="reports-grid">
+              <div class="glass-card report-builder">
+                <h3 class="card-title"><i data-lucide="file-bar-chart-2"></i> Report Builder</h3>
+
+                <div class="form-group">
+                  <label>Report Name</label>
+                  <input type="text" id="report-name" placeholder="Q4 Sales Report" />
+                </div>
+                <div class="form-group">
+                  <label>Select Dataset</label>
+                  <select id="report-dataset">
+                    <option value="">— Choose dataset —</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Chart Type</label>
+                  <div class="chart-type-grid" id="report-chart-types">
+                    <button class="chart-type-btn active" data-type="bar"><i data-lucide="bar-chart-2"></i><span>Bar</span></button>
+                    <button class="chart-type-btn" data-type="line"><i data-lucide="trending-up"></i><span>Line</span></button>
+                    <button class="chart-type-btn" data-type="pie"><i data-lucide="pie-chart"></i><span>Pie</span></button>
+                    <button class="chart-type-btn" data-type="doughnut"><i data-lucide="donut"></i><span>Donut</span></button>
+                    <button class="chart-type-btn" data-type="area"><i data-lucide="area-chart"></i><span>Area</span></button>
+                    <button class="chart-type-btn" data-type="scatter"><i data-lucide="scatter-chart"></i><span>Scatter</span></button>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>X Axis</label>
+                    <select id="report-x-axis"><option value="">— Select —</option></select>
+                  </div>
+                  <div class="form-group">
+                    <label>Y Axis</label>
+                    <select id="report-y-axis"><option value="">— Select —</option></select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Color Theme</label>
+                  <div class="color-themes" id="report-color-themes">
+                    <button class="color-theme active" data-theme="violet" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)"></button>
+                    <button class="color-theme" data-theme="blue" style="background:linear-gradient(135deg,#3b82f6,#06b6d4)"></button>
+                    <button class="color-theme" data-theme="green" style="background:linear-gradient(135deg,#10b981,#84cc16)"></button>
+                    <button class="color-theme" data-theme="amber" style="background:linear-gradient(135deg,#f59e0b,#ef4444)"></button>
+                    <button class="color-theme" data-theme="pink" style="background:linear-gradient(135deg,#ec4899,#8b5cf6)"></button>
+                  </div>
+                </div>
+                <button class="btn btn-primary btn-full" id="btn-generate-report">
+                  <i data-lucide="zap"></i> Generate Report
+                </button>
+              </div>
+
+              <div class="glass-card report-preview-card">
+                <div class="card-title-row">
+                  <h3 class="card-title"><i data-lucide="eye"></i> Preview</h3>
+                  <div class="export-actions" id="export-actions" style="display:none">
+                    <button class="btn btn-ghost sm" id="btn-export-png">
+                      <i data-lucide="image"></i> PNG
+                    </button>
+                    <button class="btn btn-ghost sm" id="btn-export-csv">
+                      <i data-lucide="file-text"></i> CSV
+                    </button>
+                    <button class="btn btn-ghost sm" id="btn-export-xlsx">
+                      <i data-lucide="table"></i> Excel
+                    </button>
+                    <button class="btn btn-primary sm" id="btn-export-pdf">
+                      <i data-lucide="file"></i> PDF
+                    </button>
+                  </div>
+                </div>
+                <div id="report-chart-container" class="report-chart-area">
+                  <div class="chart-placeholder">
+                    <i data-lucide="bar-chart-2"></i>
+                    <p>Configure and generate your report</p>
+                  </div>
+                </div>
+                <div id="report-data-table" class="report-table-area hidden">
+                  <!-- data table -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Saved Reports -->
+            <div class="section-header" style="margin-top:2.5rem;">
+              <h3>Saved Reports</h3>
+            </div>
+            <div id="saved-reports-list" class="saved-reports-list">
+              <!-- report cards -->
+            </div>
+          </div>
+
+          <!-- Settings Page -->
+          <div id="page-settings" class="page hidden">
+            <div class="section-header">
+              <div>
+                <h2>Settings</h2>
+                <p class="section-subtitle">Manage your account and preferences</p>
+              </div>
+            </div>
+            <div class="settings-grid">
+              <div class="glass-card">
+                <h3 class="card-title"><i data-lucide="user-circle"></i> Profile</h3>
+                <div class="form-group">
+                  <label>Full Name</label>
+                  <input type="text" id="settings-name" />
+                </div>
+                <div class="form-group">
+                  <label>Email</label>
+                  <input type="email" id="settings-email" />
+                </div>
+                <button class="btn btn-primary sm" id="btn-save-profile">Save Changes</button>
+              </div>
+              <div class="glass-card">
+                <h3 class="card-title"><i data-lucide="palette"></i> Appearance</h3>
+                <div class="form-group">
+                  <label>Accent Color</label>
+                  <div class="accent-colors" id="accent-colors">
+                    <button class="accent-btn active" data-color="violet" style="background:#6366f1"></button>
+                    <button class="accent-btn" data-color="blue" style="background:#3b82f6"></button>
+                    <button class="accent-btn" data-color="teal" style="background:#14b8a6"></button>
+                    <button class="accent-btn" data-color="rose" style="background:#f43f5e"></button>
+                    <button class="accent-btn" data-color="amber" style="background:#f59e0b"></button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Date Format</label>
+                  <select id="settings-date-format">
+                    <option>MM/DD/YYYY</option>
+                    <option>DD/MM/YYYY</option>
+                    <option>YYYY-MM-DD</option>
+                  </select>
+                </div>
+                <button class="btn btn-primary sm" id="btn-save-appearance">Apply</button>
+              </div>
+              <div class="glass-card">
+                <h3 class="card-title"><i data-lucide="bell"></i> Notifications</h3>
+                <div class="toggle-row">
+                  <div>
+                    <p class="toggle-label">KPI Threshold Alerts</p>
+                    <p class="toggle-sub">Get notified when KPIs cross thresholds</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="notif-kpi" checked />
+                    <span class="toggle-track"></span>
+                  </label>
+                </div>
+                <div class="toggle-row">
+                  <div>
+                    <p class="toggle-label">Scheduled Reports</p>
+                    <p class="toggle-sub">Receive weekly report summaries</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="notif-reports" />
+                    <span class="toggle-track"></span>
+                  </label>
+                </div>
+                <div class="toggle-row">
+                  <div>
+                    <p class="toggle-label">Data Import Alerts</p>
+                    <p class="toggle-sub">Notify on import success or failure</p>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="notif-import" checked />
+                    <span class="toggle-track"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="glass-card danger-zone">
+                <h3 class="card-title danger"><i data-lucide="alert-triangle"></i> Danger Zone</h3>
+                <p>Clear all data stored in this browser. This cannot be undone.</p>
+                <button class="btn btn-danger" id="btn-clear-all-data">
+                  <i data-lucide="trash-2"></i> Clear All Data
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /pages-container -->
+      </main>
+    </div><!-- /main-app -->
+  </div><!-- /app -->
+
+  <!-- MODALS -->
+
+  <!-- Add Widget Modal -->
+  <div id="modal-add-widget" class="modal-overlay hidden">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h3><i data-lucide="layout-grid"></i> Add Widget</h3>
+        <button class="btn-icon modal-close" data-modal="modal-add-widget"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Widget Title</label>
+          <input type="text" id="widget-title" placeholder="Revenue Overview" />
+        </div>
+        <div class="form-group">
+          <label>Chart Type</label>
+          <div class="chart-type-grid" id="widget-chart-types">
+            <button class="chart-type-btn active" data-type="bar"><i data-lucide="bar-chart-2"></i><span>Bar</span></button>
+            <button class="chart-type-btn" data-type="line"><i data-lucide="trending-up"></i><span>Line</span></button>
+            <button class="chart-type-btn" data-type="pie"><i data-lucide="pie-chart"></i><span>Pie</span></button>
+            <button class="chart-type-btn" data-type="doughnut"><i data-lucide="donut"></i><span>Donut</span></button>
+            <button class="chart-type-btn" data-type="area"><i data-lucide="area-chart"></i><span>Area</span></button>
+            <button class="chart-type-btn" data-type="kpi"><i data-lucide="activity"></i><span>KPI Card</span></button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Data Source</label>
+          <select id="widget-dataset">
+            <option value="">— Select dataset —</option>
+            <option value="demo">Demo: Sales Data</option>
+          </select>
+        </div>
+        <div class="form-row" id="widget-axis-row">
+          <div class="form-group">
+            <label>X Axis / Label Column</label>
+            <select id="widget-x-axis"><option value="">— Select —</option></select>
+          </div>
+          <div class="form-group">
+            <label>Y Axis / Value Column</label>
+            <select id="widget-y-axis"><option value="">— Select —</option></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Size</label>
+          <div class="size-selector">
+            <button class="size-btn active" data-size="sm">Small</button>
+            <button class="size-btn" data-size="md">Medium</button>
+            <button class="size-btn" data-size="lg">Large</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-modal="modal-add-widget">Cancel</button>
+        <button class="btn btn-primary" id="btn-confirm-widget">
+          <i data-lucide="plus"></i> Add Widget
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add KPI Modal -->
+  <div id="modal-add-kpi" class="modal-overlay hidden">
+    <div class="modal glass-card">
+      <div class="modal-header">
+        <h3><i data-lucide="activity"></i> Add KPI</h3>
+        <button class="btn-icon modal-close" data-modal="modal-add-kpi"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>KPI Name</label>
+          <input type="text" id="kpi-name" placeholder="Monthly Revenue" />
+        </div>
+        <div class="form-group">
+          <label>Data Source</label>
+          <select id="kpi-dataset">
+            <option value="">— Select dataset —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Value Column</label>
+          <select id="kpi-value-col"><option value="">— Select —</option></select>
+        </div>
+        <div class="form-group">
+          <label>Aggregation</label>
+          <select id="kpi-aggregation">
+            <option value="sum">Sum</option>
+            <option value="avg">Average</option>
+            <option value="max">Maximum</option>
+            <option value="min">Minimum</option>
+            <option value="count">Count</option>
+            <option value="last">Last Value</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Unit / Prefix</label>
+            <input type="text" id="kpi-unit" placeholder="$" />
+          </div>
+          <div class="form-group">
+            <label>Target Value</label>
+            <input type="number" id="kpi-target" placeholder="100000" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Warning Threshold (%)</label>
+            <input type="number" id="kpi-warn" value="80" min="0" max="100" />
+          </div>
+          <div class="form-group">
+            <label>Critical Threshold (%)</label>
+            <input type="number" id="kpi-crit" value="60" min="0" max="100" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Color</label>
+          <div class="color-dot-row">
+            <button class="color-dot active" data-color="#6366f1" style="background:#6366f1"></button>
+            <button class="color-dot" data-color="#3b82f6" style="background:#3b82f6"></button>
+            <button class="color-dot" data-color="#10b981" style="background:#10b981"></button>
+            <button class="color-dot" data-color="#f59e0b" style="background:#f59e0b"></button>
+            <button class="color-dot" data-color="#ef4444" style="background:#ef4444"></button>
+            <button class="color-dot" data-color="#ec4899" style="background:#ec4899"></button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-modal="modal-add-kpi">Cancel</button>
+        <button class="btn btn-primary" id="btn-confirm-kpi">
+          <i data-lucide="plus"></i> Add KPI
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
