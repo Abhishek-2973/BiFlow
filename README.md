@@ -1,10 +1,6 @@
-# BIFlow — Data Analytics & Business Intelligence Dashboard
-
-A fully self-contained, production-quality Business Intelligence platform built with HTML, CSS, and vanilla JavaScript. No build tools or server required — just open `index.html` in your browser.
-
 # BIFlow – Data Analytics & Business Intelligence Dashboard
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-00C853?style=for-the-badge)](https://bifloww.netlify.app/)
+🌐 **Live Demo:** https://bifloww.netlify.app/
 
 A fully self-contained, production-quality Business Intelligence platform built with HTML, CSS, and vanilla JavaScript. No build tools or server required—just open `index.html` in your browser.
 
